@@ -80,3 +80,4 @@ public class ConsultationSearchVM {
         this.specialtyName = specialtyName;
     }
 }
+

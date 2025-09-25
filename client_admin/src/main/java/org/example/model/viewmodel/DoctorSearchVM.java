@@ -82,3 +82,4 @@ public class DoctorSearchVM {
         return firstName + " " + lastName;
     }
 }
+

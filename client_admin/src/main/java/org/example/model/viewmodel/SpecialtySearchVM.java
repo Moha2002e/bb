@@ -58,3 +58,4 @@ public class SpecialtySearchVM {
         this.consultationCount = consultationCount;
     }
 }
+

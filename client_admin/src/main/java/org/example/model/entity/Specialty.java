@@ -39,3 +39,4 @@ public class Specialty implements Entity {
         this.description = description;
     }
 }
+

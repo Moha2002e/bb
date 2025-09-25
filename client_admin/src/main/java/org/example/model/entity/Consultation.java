@@ -82,3 +82,4 @@ public class Consultation implements Entity {
         this.doctorId = doctorId;
     }
 }
+

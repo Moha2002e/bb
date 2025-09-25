@@ -94,3 +94,4 @@ public class PatientSearchVM {
         return firstName + " " + lastName;
     }
 }
+

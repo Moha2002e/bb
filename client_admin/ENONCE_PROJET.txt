@@ -1,0 +1,347 @@
+================================================================================
+                    ENONCE DU PROJET - ARCHITECTURE CLIENT/SERVEUR
+                    Application de Gestion Hospitalière
+================================================================================
+
+Ce projet comporte les éléments suivants :
+
+1. Le client Java « Admin » pour le serveur Réservation
+2. Les DAO d'accès à la base de données construits en utilisant JDBC
+3. Le serveur « Consultation » multi-threads Java, utilisant les DAO développés
+4. Le client Java « Consultation » capable de communiquer avec ce serveur
+
+================================================================================
+1. L'APPLICATION « CLIENT ADMIN » JAVA
+================================================================================
+
+Sur le schéma global de l'application, cela correspond au client administrateur.
+
+Vous devez développer une application fenêtrée en Java (Swing) capable d'interagir 
+avec le « Serveur Réservation » déjà développé. Cette application cliente, utilisée 
+par les administrateurs en informatique de l'hôpital, se connectera sur le port 
+PORT_ADMIN du serveur Réservation.
+
+Le protocole, « Admin Consultation Booking Protocol » (ACBP) est des plus simples 
+car ne comportant qu'une seule commande :
+
+Serveur Réservation -- Protocole ACBP – PORT_ADMIN
+┌─────────────────┬─────────────────────────────────┬─────────────────────────────┐
+│ Commande        │ Requête                         │ Réponse                     │
+├─────────────────┼─────────────────────────────────┼─────────────────────────────┤
+│ « LIST_CLIENTS »│ Liste des clients connectés     │ Interrogation du protocole  │
+│                 │ (adresse IP, nom, prénom,       │ CBP afin d'obtenir cette    │
+│                 │ no patient)                     │ liste                       │
+└─────────────────┴─────────────────────────────────┴─────────────────────────────┘
+
+Le serveur traitant le protocole ACBP sera un serveur :
+• de requêtes (et non de connexions)
+• multi-threads écrit en C (threads POSIX)
+• implémentant le modèle « à la demande »
+• attendant sur le port PORT_ADMIN
+• tournant au sein du même processus que celui s'occupant du protocole CBP
+  → le processus « Serveur Réservation » comportera donc deux sockets d'écoute
+  (une sur le PORT_RESERVATION et une sur le PORT_ADMIN).
+
+================================================================================
+2. LES DAO (JAVA) D'ACCÈS À LA BASE DE DONNÉES
+================================================================================
+
+L'accès à la base de données ne devra pas se faire avec les primitives JDBC utilisées 
+telles quelles, mais plutôt au moyen d'objets permettant d'accéder aux données, des 
+DAO (« Data Access Object ») spécifiques à chaque entité.
+
+On demande donc de construire un ensemble de classes et de packages :
+
+• Les classes « entity », c'est-à-dire les objets « métiers » :
+  Patient, Doctor, Consultation, … collant (« object mapping ») à la structure 
+  de la base de données
+
+• Les classes « DAO » encapsulant la connexion à la base de données et les 
+  méthodes classiques dites « CRUD »
+
+• Les classes « xxxSearchVM » permettant de réaliser des sélections d'entités 
+  selon certains critères. En particulier, on pourra réaliser des filtres de 
+  recherche sur :
+  o les « consultations » selon l'id, le médecin et le patient
+  o les « patient » selon l'id, le lastName (« like ») et le firstName (« like »)
+  o les « médecins » selon l'id, la spécialité (« like »), le lastName (« like »)
+  o … selon les besoins que vous aurez pour répondre aux fonctionnalités demandées
+
+IMPORTANT : Une seule instance de la connexion à la base de données devra être 
+utilisée par tous les objets DAO instanciés (la connexion à la BD sera donc unique). 
+Chaque type d'objet xxxDAO ne sera instancié qu'une seule fois et partagé entre 
+les threads du serveur Consultation. Ce serveur est un serveur multi-threads : 
+attention donc aux accès concurrents !
+
+================================================================================
+3. LE SERVEUR CONSULTATION ET SON APPLICATION CLIENTE
+================================================================================
+
+L'application Java « Client Consultation » est utilisée par un médecin qui souhaite 
+gérer ses consultations. En voici les fonctionnalités :
+
+• Pour entrer en session, un médecin devra encoder un login et un mot de passe 
+  → vous êtes libres de modifier la structure de la base de données ou d'ajouter 
+  des tables
+
+• Le médecin pourra alors :
+  o Lister l'ensemble de SES consultations (pas celles des autres médecins) 
+    qu'elles soient déjà réservées par un patient ou non (dans une JTable où 
+    chaque ligne correspondra à une consultation → on devra y voir apparaître 
+    l'id, le patient (ou pas), la raison (ou pas), la date et l'heure) → il 
+    pourra également filtrer ses consultations sur les critères suivants : 
+    patients et dates
+
+  o Encoder un nouveau patient (nom et prénom) → celui-ci sera ajouté en BD 
+    et un id lui sera attribué
+
+  o Créer une ou plusieurs nouvelles consultations (pour lui, pas pour un autre 
+    médecin) en choisissant la date et l'heure de début → la (les) consultation(s) 
+    sera(ont) ajoutée(s) en BD → il pourra ensuite lui-même encoder le patient 
+    et la raison ou alors laisser la consultation libre d'être réservée par un patient
+
+  o Supprimer une de ses consultations qui n'a pas encore été réservé par un patient
+
+  o Modifier une de ses consultations (date, heure mais pas le patient ni la raison)
+
+A vous à créer une application graphique (Swing) qui soit le plus ergonomique 
+possible pour répondre à ces fonctionnalités.
+
+Etant donné, que l'application Java « Client Consultation » et le « serveur 
+Consultation » se situent tous les deux dans le même réseau local et qu'aucune 
+donnée critique des patients ne transite entre eux, aucun mécanisme de sécurisation 
+(cryptage, signature électronique, …) n'a été envisagé ici.
+
+================================================================================
+4. CONSIGNES D'IMPLÉMENTATION
+================================================================================
+
+Tout d'abord, le pont JDBC entre le serveur Consultation et la base de données se 
+fera en utilisant les DAO développés à la section précédente.
+
+Le « Serveur Consultation » devra être un serveur :
+• multi-threads écrit en Java (utilisant le package java.net)
+• de requêtes (et non de connexions)
+• implémentant le modèle « en pool de threads »
+• attendant sur le port PORT_CONSULTATION
+
+Le numéro du port PORT_CONSULTATION, les paramètres de la BD seront lus dans un 
+fichier (properties) de configuration du serveur.
+
+Pour la construction du protocole, vous utiliserez des objets sérialisés vu que 
+c'est de la communication Java-Java. Ce protocole s'appellera « Consultation 
+Administration Protocol » (CAP). Les différentes commandes sont décrites ci-dessous :
+
+Serveur Consultations -- Protocole CAP – PORT_CONSULTATION
+┌─────────────────────┬─────────────────────────────┬─────────────────────────────┐
+│ Commande            │ Requête                     │ Réponse                     │
+├─────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ « LOGIN »           │ Login et password du médecin│ Oui ou non                  │
+├─────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ « ADD_CONSULTATION »│ Date, heure, durée, nombre  │ Oui ou non (si on dépasse   │
+│                     │ de consultations            │ 17h00)                      │
+│                     │ consécutives                │                             │
+├─────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ « ADD_PATIENT »     │ Nom et prénom du patient    │ Id attribué au patient      │
+├─────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ « UPDATE_CONSULTATION» Id de la consultation,     │ Oui ou non                  │
+│                     │ nouvelle date, nouvelle     │                             │
+│                     │ heure, patient, raison      │                             │
+├─────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ « SEARCH_CONSULTATIONS» Patient, date             │ Liste des consultations     │
+├─────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ « DELETE_CONSULTATION» Id de la consultation      │ Oui ou non                  │
+├─────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ « LOGOUT »          │ …                           │ …                           │
+└─────────────────────┴─────────────────────────────┴─────────────────────────────┘
+
+Actions / Explications :
+
+• LOGIN : Vérification du login/password du médecin en BD
+• ADD_CONSULTATION : Création en BD du nombre de consultations souhaitées pour 
+  ce médecin, à la date fournie et à partir de l'heure fournie (la durée permet 
+  de connaître les heures de chaque entité consultation créée en BD) → actuellement 
+  aucun patient ni raison attribuée
+• ADD_PATIENT : Ajout du patient en BD
+• UPDATE_CONSULTATION : Attribue un patient et une raison à une consultation 
+  existante OU modifie les date/heure d'une consultation déjà attribuée à un patient
+• SEARCH_CONSULTATIONS : Recherche en BD des consultations (de ce médecin) selon 
+  les critères demandés (patient, date)
+• DELETE_CONSULTATION : Suppression de la consultation si pas déjà attribuée à un patient
+• LOGOUT : Déconnexion du médecin
+
+================================================================================
+5. STRUCTURE DE FICHIERS ATTENDUE
+================================================================================
+
+Le projet doit être organisé selon l'architecture MVC avec les packages suivants :
+
+src/main/java/org/example/
+├── model/
+│   ├── dao/                    # Data Access Objects
+│   │   ├── ConsultationDAO.java
+│   │   ├── DoctorDAO.java
+│   │   ├── PatientDAO.java
+│   │   └── SpecialtyDAO.java
+│   ├── entity/                 # Entités métier
+│   │   ├── Entity.java         # Interface commune
+│   │   ├── Consultation.java
+│   │   ├── Doctor.java
+│   │   ├── Patient.java
+│   │   └── Specialty.java
+│   └── viewmodel/              # Modèles de vue pour recherche
+│       ├── ConsultationSearchVM.java
+│       ├── DoctorSearchVM.java
+│       ├── PatientSearchVM.java
+│       └── SpecialtySearchVM.java
+├── server/                     # Serveur Consultation
+│   ├── ConsultationServer.java
+│   ├── ClientHandler.java
+│   └── config/
+│       └── server.properties
+├── client/                     # Clients
+│   ├── admin/                  # Client Admin
+│   │   └── AdminClient.java
+│   └── consultation/           # Client Consultation
+│       └── ConsultationClient.java
+└── protocol/                   # Protocoles de communication
+    ├── CAPProtocol.java        # Consultation Administration Protocol
+    └── ACBPProtocol.java       # Admin Consultation Booking Protocol
+
+================================================================================
+6. POINTS IMPORTANTS À RETENIR
+================================================================================
+
+• Utilisation de JDBC avec des DAO pour l'accès aux données
+• Connexion unique à la base de données partagée entre tous les DAO
+• Gestion des accès concurrents (thread-safety)
+• Serveur multi-threads avec pool de threads
+• Communication par objets sérialisés Java
+• Interface graphique Swing ergonomique
+• Configuration via fichiers properties
+• Séparation claire des responsabilités (MVC)
+
+================================================================================
+7. ÉTAPES DE DÉVELOPPEMENT - PLAN DE TRAVAIL
+================================================================================
+
+Voici les étapes à suivre une par une pour terminer l'évaluation :
+
+ÉTAPE 1 : FINALISER LA STRUCTURE DE BASE
+────────────────────────────────────────────────────────────────────────────
+□ Créer la structure de dossiers complète (model, server, client, protocol)
+□ Implémenter l'interface Entity et toutes les classes entity
+□ Créer les classes ViewModel pour les recherches
+□ Tester la compilation de la structure de base
+
+ÉTAPE 2 : DÉVELOPPER LES DAO
+────────────────────────────────────────────────────────────────────────────
+□ Créer une classe DatabaseConnection pour gérer la connexion unique
+□ Implémenter PatientDAO avec toutes les méthodes CRUD
+□ Implémenter DoctorDAO avec toutes les méthodes CRUD
+□ Implémenter ConsultationDAO avec toutes les méthodes CRUD
+□ Implémenter SpecialtyDAO avec toutes les méthodes CRUD
+□ Ajouter les méthodes de recherche dans chaque DAO
+□ Tester les DAO avec une base de données de test
+
+ÉTAPE 3 : CRÉER LES PROTOCOLES DE COMMUNICATION
+────────────────────────────────────────────────────────────────────────────
+□ Définir les classes de requêtes/réponses pour le protocole CAP
+□ Définir les classes de requêtes/réponses pour le protocole ACBP
+□ Créer les énumérations pour les commandes
+□ Implémenter la sérialisation/désérialisation des objets
+□ Tester la communication entre client et serveur
+
+ÉTAPE 4 : DÉVELOPPER LE SERVEUR CONSULTATION
+────────────────────────────────────────────────────────────────────────────
+□ Créer la classe ConsultationServer principale
+□ Implémenter le pool de threads
+□ Créer la classe ClientHandler pour traiter les requêtes
+□ Implémenter le protocole CAP (toutes les commandes)
+□ Créer le fichier de configuration server.properties
+□ Ajouter la gestion des erreurs et logs
+□ Tester le serveur avec des clients de test
+
+ÉTAPE 5 : DÉVELOPPER LE CLIENT CONSULTATION
+────────────────────────────────────────────────────────────────────────────
+□ Créer l'interface de connexion (login/password)
+□ Implémenter l'affichage des consultations dans une JTable
+□ Ajouter les filtres de recherche (patient, date)
+□ Créer le formulaire d'ajout de patient
+□ Implémenter la création de consultations
+□ Ajouter la modification/suppression de consultations
+□ Créer une interface utilisateur ergonomique
+□ Tester toutes les fonctionnalités
+
+ÉTAPE 6 : DÉVELOPPER LE CLIENT ADMIN
+────────────────────────────────────────────────────────────────────────────
+□ Créer l'interface de connexion au serveur Réservation
+□ Implémenter la commande LIST_CLIENTS
+□ Afficher la liste des clients connectés dans une JTable
+□ Ajouter la gestion des erreurs de connexion
+□ Créer une interface simple et claire
+□ Tester la communication avec le serveur Réservation
+
+ÉTAPE 7 : INTÉGRATION ET TESTS
+────────────────────────────────────────────────────────────────────────────
+□ Tester l'intégration complète du système
+□ Vérifier la gestion des accès concurrents
+□ Tester la robustesse avec plusieurs clients simultanés
+□ Valider toutes les fonctionnalités demandées
+□ Corriger les bugs éventuels
+□ Optimiser les performances si nécessaire
+
+ÉTAPE 8 : DOCUMENTATION ET FINALISATION
+────────────────────────────────────────────────────────────────────────────
+□ Documenter le code avec des commentaires appropriés
+□ Créer un README avec les instructions d'installation
+□ Documenter les protocoles de communication
+□ Préparer une démonstration du système
+□ Vérifier que tous les critères d'évaluation sont remplis
+
+================================================================================
+8. CRITÈRES D'ÉVALUATION
+================================================================================
+
+Votre projet sera évalué sur les critères suivants :
+
+FONCTIONNALITÉS (40%)
+□ Client Admin fonctionnel avec protocole ACBP
+□ Serveur Consultation multi-threads opérationnel
+□ Client Consultation avec toutes les fonctionnalités demandées
+□ DAO correctement implémentés avec accès BDD
+□ Protocoles de communication fonctionnels
+
+ARCHITECTURE ET CODE (30%)
+□ Respect de l'architecture MVC
+□ Code propre et bien structuré
+□ Gestion appropriée des exceptions
+□ Thread-safety respectée
+□ Connexion unique à la base de données
+
+INTERFACE UTILISATEUR (20%)
+□ Interface Swing ergonomique et intuitive
+□ Gestion des erreurs utilisateur
+□ Affichage approprié des données
+□ Navigation fluide entre les fonctionnalités
+
+TESTS ET ROBUSTESSE (10%)
+□ Système testé avec plusieurs clients
+□ Gestion des cas d'erreur
+□ Performance acceptable
+□ Stabilité du système
+
+================================================================================
+9. CONSEILS POUR RÉUSSIR
+================================================================================
+
+• Commencez par les DAO et testez-les individuellement
+• Développez le serveur avant les clients
+• Testez chaque composant séparément avant l'intégration
+• Utilisez des logs pour débugger les problèmes de communication
+• Respectez les conventions de nommage Java
+• Documentez votre code au fur et à mesure
+• Testez avec plusieurs clients simultanés
+• Vérifiez la gestion des accès concurrents
+
+================================================================================
