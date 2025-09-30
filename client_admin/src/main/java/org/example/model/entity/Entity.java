@@ -1,7 +1,7 @@
 package org.example.model.entity;
 
 public interface Entity {
-    Long getId();
-    void setId(Long id);
+    Integer getId();
+    void setId(Integer id);
 }
 

@@ -1,77 +1,47 @@
 package org.example.model.entity;
 
 public class Doctor implements Entity {
-    private Long id;
-    private String firstName;
-    private String lastName;
-    private String email;
-    private String phone;
-    private Long specialtyId;
-    
+    private Integer id;
+    private String last_name;
+    private String first_name;
+
+
     public Doctor() {}
-    
-    public Doctor(Long id, String firstName, String lastName, String email, 
-                 String phone, Long specialtyId) {
+    public Doctor(Integer id, String last_name, String first_name) {
         this.id = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.phone = phone;
-        this.specialtyId = specialtyId;
+        this.last_name = last_name;
+        this.first_name = first_name;
     }
-    
     @Override
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
-    
     @Override
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
-    
-    public String getFirstName() {
-        return firstName;
+    public String getLast_name() {
+        return last_name;
     }
-    
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
+    public void setLast_name(String last_name) {
+        this.last_name = last_name;
     }
-    
-    public String getLastName() {
-        return lastName;
+    public String getFirst_name() {
+        return first_name;
     }
-    
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
+    public void setFirst_name(String first_name) {
+        this.first_name = first_name;
     }
-    
-    public String getEmail() {
-        return email;
+    @Override
+    public String toString() {
+        return "Doctor{" +
+                "id=" + id +
+                ", last_name='" + last_name + '\'' +
+                ", first_name='" + first_name + '\'' +
+                '}';
     }
+
     
-    public void setEmail(String email) {
-        this.email = email;
-    }
-    
-    public String getPhone() {
-        return phone;
-    }
-    
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-    
-    public Long getSpecialtyId() {
-        return specialtyId;
-    }
-    
-    public void setSpecialtyId(Long specialtyId) {
-        this.specialtyId = specialtyId;
-    }
-    
-    public String getFullName() {
-        return firstName + " " + lastName;
-    }
+
 }
 

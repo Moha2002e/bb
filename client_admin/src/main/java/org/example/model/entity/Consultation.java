@@ -3,83 +3,85 @@ package org.example.model.entity;
 import java.time.LocalDateTime;
 
 public class Consultation implements Entity {
-    private Long id;
+    private Integer id;
+    private Integer doctorId;
+    private Integer patientId;
+    private java.sql.Date date;
     private LocalDateTime dateTime;
-    private String description;
-    private String diagnosis;
-    private String prescription;
-    private Long patientId;
-    private Long doctorId;
-    
+    private String reason;
+
     public Consultation() {}
-    
-    public Consultation(Long id, LocalDateTime dateTime, String description, 
-                       String diagnosis, String prescription, Long patientId, Long doctorId) {
+
+    public Consultation(Integer id, Integer doctorId, Integer patientId, java.sql.Date date,
+                        LocalDateTime dateTime, String reason) {
         this.id = id;
-        this.dateTime = dateTime;
-        this.description = description;
-        this.diagnosis = diagnosis;
-        this.prescription = prescription;
-        this.patientId = patientId;
         this.doctorId = doctorId;
+        this.patientId = patientId;
+        this.date = date;
+        this.dateTime = dateTime;
+        this.reason = reason;
+
     }
-    
+
     @Override
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
-    
-    @Override
-    public void setId(Long id) {
+
+    public void setId(Integer id) {
         this.id = id;
     }
-    
+
+    public Integer getDoctorId() {
+        return doctorId;
+    }
+
+    public void setDoctorId(Integer doctorId) {
+        this.doctorId = doctorId;
+    }
+
+    public Integer getPatientId() {
+        return patientId;
+    }
+
+    public void setPatientId(Integer patientId) {
+        this.patientId = patientId;
+    }
+
+    public java.sql.Date getDate() {
+        return date;
+    }
+
+    public void setDate(java.sql.Date date) {
+        this.date = date;
+    }
+
     public LocalDateTime getDateTime() {
         return dateTime;
     }
-    
+
     public void setDateTime(LocalDateTime dateTime) {
         this.dateTime = dateTime;
     }
-    
-    public String getDescription() {
-        return description;
+
+    public String getReason() {
+        return reason;
     }
-    
-    public void setDescription(String description) {
-        this.description = description;
+
+    public void setReason(String reason) {
+        this.reason = reason;
     }
-    
-    public String getDiagnosis() {
-        return diagnosis;
-    }
-    
-    public void setDiagnosis(String diagnosis) {
-        this.diagnosis = diagnosis;
-    }
-    
-    public String getPrescription() {
-        return prescription;
-    }
-    
-    public void setPrescription(String prescription) {
-        this.prescription = prescription;
-    }
-    
-    public Long getPatientId() {
-        return patientId;
-    }
-    
-    public void setPatientId(Long patientId) {
-        this.patientId = patientId;
-    }
-    
-    public Long getDoctorId() {
-        return doctorId;
-    }
-    
-    public void setDoctorId(Long doctorId) {
-        this.doctorId = doctorId;
+
+    @Override
+    public String toString() {
+        return "Consultation{" +
+                "id=" + id +
+                ", doctorId=" + doctorId +
+                ", patientId=" + patientId +
+                ", date=" + date +
+                ", dateTime=" + dateTime +
+                ", reason='" + reason + '\'' +
+                '}';
     }
 }
 
