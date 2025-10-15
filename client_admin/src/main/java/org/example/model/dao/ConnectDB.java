@@ -75,6 +75,7 @@ public class ConnectDB {
         Statement statement = connection.createStatement();
         return statement.executeUpdate(sql);
     }
+    // fermer la connexion
     public synchronized void close() throws SQLException {
         if(connection != null && !connection.isClosed()) {
             connection.close();
